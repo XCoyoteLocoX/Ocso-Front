@@ -1,5 +1,7 @@
-import Header from "./_components/Header";
-import Sidebar from "./_components/_sidebar/Sidebar";
+"use client"
+import { usePathname } from "next/navigation";
+import Sidebar from "./managers/_components/_sidebar/Sidebar";
+import Header from "./managers/_components/Header";
 
 export default function LayoutDashboard({
     children, 
@@ -8,11 +10,13 @@ export default function LayoutDashboard({
     children: React.ReactNode;
     locations: React.ReactNode;
 }>) {
-    return <div className="w-screen h-screen bg-orange-50">
+    const path = usePathname();
+    return <div className="bg-orange-50">
+        <Header/>
         <div className="flex flex-row items-center">
         <Sidebar/>
         {children}
-        {locations}
+        {path === "/dashboard" ? locations : null}
         </div>
         </div>
 }

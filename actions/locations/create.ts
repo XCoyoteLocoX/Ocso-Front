@@ -1,41 +1,46 @@
 "use server";
-import axios from "axios";
-import { cookies } from "next/headers";
-import { API_URL, TOKEN_NAME } from "@/constants";
+
+import { authHeaders } from "@/helpers/authHeaders";
+import { API_URL } from "@/constants";
+import { revalidateTag } from "next/cache";
+import { redirect } from "next/navigation";
+import { Location } from "@/entities"; // Asegúrate de tener este tipo
 
 export async function createLocation(formData: FormData): Promise<void> {
-  const userCookies = cookies();
-  const token = (await userCookies).get(TOKEN_NAME)?.value;
-  if (!token) {
-    console.error("No token found in cookies");
-    return;
+  // ✅ Extraer campos correctamente
+  const locationLat = Number(formData.get("locationLat"));
+  const locationLng = Number(formData.get("locationLng"));
+
+  const location = {
+    locationName: formData.get("locationName"),
+    locationAddress: formData.get("locationAddress"),
+    locationLatLng: [locationLat, locationLng],
+    managerId: formData.get("managerId"),
+  };
+
+  // ✅ Esperar headers correctamente
+  const headers = await authHeaders();
+
+  // ✅ Llamar a la API
+  const response = await fetch(`${API_URL}/locations`, {
+    method: "POST",
+    body: JSON.stringify(location),
+    headers: {
+      "Content-Type": "application/json",
+      ...headers,
+    },
+  });
+
+  if (!response.ok) {
+    console.error("Error creando ubicación:", await response.text());
+    throw new Error("No se pudo crear la ubicación");
   }
 
-  let location: any = {};
-  let locationLatLng = [0, 0];
+  const { locationId }: Location = await response.json();
 
-  for (const key of formData.keys()) {
-    const value = formData.get(key);
-    if (value) {
-      if (key === "locationLat") {
-        locationLatLng[0] = +value;
-      } else if (key === "locationLng") {
-        locationLatLng[1] = +value;
-      } else {
-        location[key] = value;
-      }
-    }
+  // ✅ Revalidar cache y redirigir si fue exitoso
+  if (response.status === 201) {
+    revalidateTag("dashboard:locations");
+    redirect(`/dashboard?store=${locationId}`);
   }
-
-  location.locationLatLng = locationLatLng;
-
-  await axios.post(
-    `${API_URL}/locations`,
-    { ...location },
-    {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    }
-  );
 }
