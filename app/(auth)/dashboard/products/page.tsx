@@ -1,38 +1,66 @@
-import Link from "next/link"; // ✅ CORREGIDO
+import createProduct from "@/actions/products/create";
 import { API_URL } from "@/constants";
-import { Product } from "@/entities";
 import { authHeaders } from "@/helpers/authHeaders";
-import FilteredCards from "./_components/FilteredCards";
-
+import { Button, Input } from "@heroui/react";
+import { LuDollarSign } from "react-icons/lu";
+import SelectProvider from "./_components/SelectProvider";
+import { Provider } from "@/entities";
 
 const ProductsPage = async () => {
-  // ✅ Esperar headers correctamente
+  // ✅ Obtener headers correctamente
   const headers = await authHeaders();
 
-  // ✅ Hacer fetch
-  const response = await fetch(`${API_URL}/products`, {
+  // ✅ Fetch de proveedores con los headers
+  const responseProviders = await fetch(`${API_URL}/providers`, {
     headers,
-    next: {
-      tags: ["dashboard:products"],
-    },
+    next: { tags: ["dashboard:providers"] },
   });
 
-  if (!response.ok) {
-    return (
-      <p className="text-red-500 text-center mt-10">
-        Error al cargar los productos.
-      </p>
-    );
+  if (!responseProviders.ok) {
+    return <p className="text-red-500 text-center mt-10">Error al cargar proveedores.</p>;
   }
 
-  const products: Product[] = await response.json();
+  // ✅ Parsear respuesta a JSON
+  const providers: Provider[] = await responseProviders.json();
 
+  // ✅ Formulario de creación de producto
   return (
-    <div className="h-[90vh]">
-        <div className="w-6/12">
-        </div>
-        <FilteredCards products={products}/>
-    </div>
+    <form
+      className="w-full flex flex-col gap-4 px-40 justify-center"
+      action={createProduct}
+    >
+      <h1 className="text-2xl font-bold mb-4">Crear Producto</h1>
+
+      <Input
+        label="Nombre"
+        name="productName"
+        placeholder="Ej. Agua Mineral"
+        isRequired
+      />
+
+      <Input
+        label="Precio"
+        name="productPrice"
+        placeholder="0.00"
+        type="number"
+        endContent={<LuDollarSign size="20" />}
+        isRequired
+      />
+
+      <Input
+        label="No. Sellos"
+        name="countSeal"
+        type="number"
+        placeholder="Ej. 3"
+      />
+
+      {/* ✅ Selector dinámico de proveedor */}
+      <SelectProvider providers={providers} />
+
+      <Button type="submit" color="primary" className="mt-4">
+        Crear Producto
+      </Button>
+    </form>
   );
 };
 
