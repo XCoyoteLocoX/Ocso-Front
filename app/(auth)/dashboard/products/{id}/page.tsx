@@ -51,9 +51,9 @@ export default async function ProductPage({
       <ProductCard product={product} />
 
       <div className="max-w-md">
-        <h1>{product.productName}</h1>
-        <h1>{product.price}</h1>
-        <h1>{product.countSeal}</h1>
+        <h1>Nombre del producto:{product.productName}</h1>
+        <h1>Precio del producto:{product.price}</h1>
+        <h1>Cantidad de sellos:{product.countSeal}</h1>
 
         <UpdateProduct product={product} providers={providers} /> {/* ✅ ahora correcto */}
         <DeleteProduct productId={product.productId} />
